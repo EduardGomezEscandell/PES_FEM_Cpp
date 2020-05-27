@@ -7,7 +7,7 @@ class Node: public Point
 public:
     int id;
     Node(int node_id, double *X);
-    Node(int node_id, double x, double y, double z);
+    Node(int node_id, double x, double y);
 };
 
 #endif // NODE_H

@@ -9,11 +9,15 @@ SOURCES += \
         elementt1.cpp \
         main.cpp \
         node.cpp \
-        point.cpp
+        point.cpp \
+        quaddata.cpp \
+        quadpoint.cpp
 
 HEADERS += \
     element.h \
     elementq2.h \
     elementt1.h \
     node.h \
-    point.h
+    point.h \
+    quaddata.h \
+    quadpoint.h

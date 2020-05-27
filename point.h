@@ -9,7 +9,7 @@ public:
 
     Point();
     Point(double *X);
-    Point(double x, double y, double z);
+    Point(double x, double y);
 };
 
 #endif // POINT_H
