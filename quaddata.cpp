@@ -1,7 +1,4 @@
 #include "quaddata.h"
-#include <fstream> // ifstream
-#include <stdlib.h> // stoi
-#include <iostream>
 
 QuadData::QuadData(std::string filename, int n_points_requested)
 {
@@ -78,34 +75,39 @@ QuadData::QuadData(std::string filename, int n_points_requested)
     QuadData::points[n_points_found] = QuadPoint();
 }
 
-std::vector<std::string> QuadData::split_string(std::string txt, char separator){
-    /*
-     *  This function splits a string 'txt' where a separator is located.
-     * If the buffer runs out of space, the partition is ended. Stores the
-     * partion in the buffer and returns the number of substrings.
-     */
-    std::vector<std::string> substrings;
-    int start=0;
-    int i;
-    for(i=0; txt[i] != '\0'; i++){
-        if(txt[i]==separator){
-            if(i==start){
-                // In case there are two consecutive separators, or a separator at the begining.
-                start++;
-            }
-            else{
-                // New partition
-                std::string tmp = txt.substr(start, i-start);
-                substrings.push_back(tmp);
-                start = i+1;
-            }
-        }
-    }
-    // Appending last substring
-    if(i > start){
-        std::string tmp = txt.substr(start, i-start);
-        substrings.push_back(tmp);
-    }
+void QuadData::initialize_shape_functions(ElementT1 sample_element){
 
-    return substrings;
+    // Obtaining sum of weights (used for integration)
+    total_weight = 0;
+
+    // Corners for the shape functions
+    double corners[3][2]= {{0,0},{1,0},{0,1}};
+
+    // Looping obtaining shape fun for all integration points;
+    for(QuadPoint *q=points; q->w > 0; q++){
+        total_weight += q->w;
+
+        double *X = barycentric_to_cartesian(q->coordinates, corners);
+        double x = X[0];
+        double y = X[1];
+        free(X);
+
+        // Shape functions
+        q->N = Eigen::MatrixXi(1, sample_element.n_nodes);
+        q->N(0) = 1 - x - y;
+        q->N(1) = x;
+        q->N(2) = y;
+
+        // Gradient
+        q->gradN = Eigen::MatrixXi(2, sample_element.n_nodes);
+        // N1
+        q->gradN(0,0) = -1;
+        q->gradN(1,0) = -1;
+        // N2
+        q->gradN(0,0) =  1;
+        q->gradN(1,0) =  0;
+        // N3
+        q->gradN(0,0) =  0;
+        q->gradN(1,0) =  1;
+    }
 }

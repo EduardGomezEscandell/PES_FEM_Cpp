@@ -1,5 +1,4 @@
 #include "element.h"
-#include <stdlib.h>
 
 Element::Element(int element_id, Node* node_list, int *node_ids)
 // Initializes an element with its connectivity

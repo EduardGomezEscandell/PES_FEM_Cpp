@@ -1,7 +1,6 @@
 #ifndef ELEMENTT1_H
 #define ELEMENTT1_H
 #include "element.h"
-#include "quaddata.h"
 
 class ElementT1: public Element
 {
@@ -12,8 +11,7 @@ public:
 
     double * barycentric_to_cartesian(double L1, double L2, double L3);
     double * barycentric_to_cartesian(double *L);
-
-    void initialize_shape_functions(QuadData *qdata);
+    double * barycentric_to_cartesian(double *L, double ** corners);
 };
 
 #endif // ELEMENTT1_H

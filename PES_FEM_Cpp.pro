@@ -4,6 +4,8 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 SOURCES += \
+        aux_functions.cpp \
+        domain.cpp \
         element.cpp \
         elementq2.cpp \
         elementt1.cpp \
@@ -14,6 +16,8 @@ SOURCES += \
         quadpoint.cpp
 
 HEADERS += \
+    aux_functions.h \
+    domain.h \
     element.h \
     elementq2.h \
     elementt1.h \

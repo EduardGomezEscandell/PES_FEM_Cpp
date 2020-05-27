@@ -1,6 +1,7 @@
 #ifndef ELEMENT_H
 #define ELEMENT_H
 #include "node.h"
+#include <stdlib.h>
 
 class Element
 {
