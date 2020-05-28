@@ -11,8 +11,8 @@ class QuadPoint: public Point
 {
 public:
     double w;
-    Eigen::MatrixXi N;
-    Eigen::MatrixXi gradN;
+    Eigen::MatrixXd N;
+    Eigen::MatrixXd gradN;
 
     QuadPoint();
     QuadPoint(double weight, double *X);

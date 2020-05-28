@@ -11,14 +11,8 @@ Point::Point(){
 Point::Point(double *X)
 // Initializes a point from a pointer of coordinates. Invalid values are 0.00
 {
-    for(int i=0; i<3; i++){
-        try{
-            coordinates[i] = X[i];
-        }
-        catch (...) {
-            coordinates[i] = 0.0;
-        }
-    }
+    coordinates[0] = X[0];
+    coordinates[1] = X[1];
 }
 
 Point::Point(double x, double y=0)

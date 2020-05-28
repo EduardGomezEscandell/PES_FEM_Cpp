@@ -1,7 +1,12 @@
 #include "elementt1.h"
 #include <stdlib.h>
 
-ElementT1::ElementT1(int element_id, Node* node_list, int *node_ids) : Element(element_id,node_list, node_ids)
+ElementT1::ElementT1() : Element()
+{
+    // Invalid element to use as sentinel
+}
+
+ElementT1::ElementT1(int element_id, Node* node_list, int* node_ids) : Element(element_id,node_list, node_ids, 3)
 {
 
 }
@@ -28,4 +33,13 @@ double *ElementT1::barycentric_to_cartesian(double *L){
                      +  L2  * Element::nodes[2].coordinates[i];
     }
     return cartesian;
+}
+
+Eigen::Matrix2d ElementT1::calc_jacobian(){
+    jacobian(0,0) = (double)(nodes[1].coordinates[0] - nodes[0].coordinates[0]);
+    jacobian(1,0) = nodes[1].coordinates[1] - nodes[0].coordinates[1];
+    jacobian(0,1) = nodes[2].coordinates[0] - nodes[0].coordinates[0];
+    jacobian(1,1) = nodes[2].coordinates[1] - nodes[0].coordinates[1];
+
+    return jacobian;
 }

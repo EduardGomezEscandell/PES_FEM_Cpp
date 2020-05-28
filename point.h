@@ -5,7 +5,7 @@
 class Point
 {
 public:
-    double coordinates[3];
+    double coordinates[2];
 
     Point();
     Point(double *X);

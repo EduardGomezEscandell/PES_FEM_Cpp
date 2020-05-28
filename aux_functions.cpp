@@ -42,3 +42,8 @@ double *barycentric_to_cartesian(double *L, double corners[3][2]){
     }
     return cartesian;
 }
+
+
+//void plot_sparsity(SpMat M){
+
+//}

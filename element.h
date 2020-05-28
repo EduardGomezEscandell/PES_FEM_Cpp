@@ -10,7 +10,8 @@ public:
     int n_nodes;
     Node* nodes;
 
-    Element(int element_id, Node* node_list, int *node_ids);
+    Element();
+    Element(int element_id, Node* node_list, int *node_ids, int nodes_per_elem);
 
     double ** get_coordinates();
 };

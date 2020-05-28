@@ -6,6 +6,7 @@ class Node: public Point
 {
 public:
     int id;
+    Node();
     Node(int node_id, double *X);
     Node(int node_id, double x, double y);
 };

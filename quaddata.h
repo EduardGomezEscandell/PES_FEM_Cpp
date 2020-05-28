@@ -19,6 +19,7 @@ public:
     int npoints;
     double total_weight;
     QuadData(std::string filename, int n_points_requested);
+    void square_quadrature();
     void initialize_shape_functions(ElementT1 sample_element);
     /* TODO
     void initialize_shape_functions(ElementT2 sample_element);

@@ -1,24 +1,32 @@
-//#ifndef DOMAIN_H
-//#define DOMAIN_H
-//#include "element.h"
-//#include "elementt1.h"
+#ifndef DOMAIN_H
+#define DOMAIN_H
+#include "element.h"
+#include "elementt1.h"
 
-//#include "node.h"
-//#include "aux_functions.h" // split_string
+#include "node.h"
+#include "aux_functions.h" // split_string
 
-//#include <stdio.h> // sprintf
-//#include <vector>
-//#include <fstream>
+#include <stdio.h> // sprintf
+#include <vector>
+#include <fstream>
+#include <iostream>
 
-//class Domain
-//{
-//public:
-//    void * elements; // Type is specified when the mesh is imported
-//    size_t n_elems;
+class Domain
+{
+public:
+    ElementT1 * elementsT1;
+    size_t n_elems;
 
-//    std::vector<Node> nodes;
+    Node * nodes;
+    size_t n_nodes;
 
-//    Domain(std::string node_file, std::string mesh_file);
-//};
+    Domain(std::string node_file, std::string mesh_file);
 
-//#endif // DOMAIN_H
+    void printnodes();
+    void printnodes(std::string filename);
+
+    void printelems();
+    void printelems(std::string filename);
+};
+
+#endif // DOMAIN_H
