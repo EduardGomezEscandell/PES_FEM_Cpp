@@ -2,10 +2,7 @@
 #define QUADPOINT_H
 #include "point.h"
 
-#ifndef EIGEN_DENSE_H
-    #define EIGEN_DENSE_H
-    #include "Eigen/Dense"
-#endif
+#include "dependencies/Eigen/Dense"
 
 class QuadPoint: public Point
 {

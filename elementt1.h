@@ -1,7 +1,7 @@
 #ifndef ELEMENTT1_H
 #define ELEMENTT1_H
 #include "element.h"
-#include "Eigen/Dense"
+#include "dependencies/Eigen/Dense"
 
 class QuadData;
 
@@ -9,6 +9,7 @@ class ElementT1: public Element
 {
 public:
     int n_nodes = 3;
+    bool jacobian_is_calculated = false;
     Eigen::Matrix2d jacobian;
 
     ElementT1();

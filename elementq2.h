@@ -2,7 +2,7 @@
 #define ELEMENTQ2_H
 
 #include "element.h"
-#include "Eigen/Dense"
+#include "dependencies/Eigen/Dense"
 
 class ElementQ2 : public Element
 {

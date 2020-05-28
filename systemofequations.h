@@ -3,14 +3,14 @@
 
 #include <vector>
 
-#include "Eigen/Sparse"
-#include "Eigen/Dense"
+#include "dependencies/Eigen/Sparse"
+#include "dependencies/Eigen/Dense"
+#include "dependencies/Eigen/SparseCholesky"
 
 #include "domain.h"
 #include "quaddata.h"
 
-typedef Eigen::SparseMatrix<double> SpMat; // Typedef'd sparse matrices
-typedef Eigen::SparseVector<double> SpVec; // Typedef'd sparse vectors
+typedef Eigen::SparseMatrix<double> SpMat;          // Typedef'd sparse matrices
 typedef std::vector<Eigen::Triplet<double>> cooMat; //Typedef'd COO matrix
 
 class SystemOfEquations
@@ -18,12 +18,22 @@ class SystemOfEquations
 public:
     cooMat K_coo;
 
+    size_t size;
+    double inv_penalty = 1e-6;
+
     SpMat K;
-    SpVec F;
-    SpVec U;
+    Eigen::VectorXd F;
+    Eigen::VectorXd U;
+
+    std::vector<Node *> dirichlet_nodes;
+    std::vector<Node *> neumann_nodes;
 
     SystemOfEquations();
-    void assemble_K(Domain dom, QuadData qdata);
+    void assemble(Domain dom, QuadData qdata);
+    void load_bc(Domain dom, std::string filename);
+    double solve();
+    void plot_sparsity(std::string filename);
+    void export_result(std::string filename);
 };
 
 #endif // SYSTEMOFEQUATIONS_H

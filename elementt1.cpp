@@ -12,15 +12,10 @@ ElementT1::ElementT1(int element_id, Node* node_list, int* node_ids) : Element(e
 }
 
 double ElementT1::get_area(){
-    double ** X = Element::get_coordinates();
-    double u[2];
-    double v[2];
-    for(int i=0; i<2; i++){
-        u[i] = X[1][i] - X[0][i];
-        v[i] = X[2][i] - X[0][i];
+    if(!jacobian_is_calculated){
+        calc_jacobian();
     }
-    double area = 0.5*(u[0]*v[1] - u[1]*v[0]);
-    return area;
+    return jacobian.determinant();
 }
 
 double *ElementT1::barycentric_to_cartesian(double *L){
@@ -35,11 +30,23 @@ double *ElementT1::barycentric_to_cartesian(double *L){
     return cartesian;
 }
 
+#define _X0_ nodes[0].coordinates[0]
+#define _X1_ nodes[1].coordinates[0]
+#define _X2_ nodes[2].coordinates[0]
+
+#define _Y0_ nodes[0].coordinates[1]
+#define _Y1_ nodes[1].coordinates[1]
+#define _Y2_ nodes[2].coordinates[1]
+
 Eigen::Matrix2d ElementT1::calc_jacobian(){
-    jacobian(0,0) = (double)(nodes[1].coordinates[0] - nodes[0].coordinates[0]);
-    jacobian(1,0) = nodes[1].coordinates[1] - nodes[0].coordinates[1];
-    jacobian(0,1) = nodes[2].coordinates[0] - nodes[0].coordinates[0];
-    jacobian(1,1) = nodes[2].coordinates[1] - nodes[0].coordinates[1];
+
+    jacobian(0,0) = _X1_ - _X0_;
+    jacobian(0,1) = _Y1_ - _Y0_;
+
+    jacobian(1,0) = _X2_ - _X0_;
+    jacobian(1,1) = _Y2_ - _Y0_;
+
+    jacobian_is_calculated = true;
 
     return jacobian;
 }

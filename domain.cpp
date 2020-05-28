@@ -103,7 +103,7 @@ Domain::Domain(std::string node_file, std::string mesh_file)
         // Reading the connectivity
         int *node_ids = (int *)malloc(data.size() * sizeof (int));
         for(size_t i=0; i<data.size(); i++){
-            node_ids[i] = stoi(data[i]);
+            node_ids[i] = stoi(data[i]) - 1; // Changing to 0-indexing
         }
 
         // Creating Element object

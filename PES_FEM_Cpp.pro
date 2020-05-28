@@ -5,7 +5,6 @@ CONFIG -= qt
 
 SOURCES += \
         aux_functions.cpp \
-        boundaryconditions.cpp \
         domain.cpp \
         element.cpp \
         elementq2.cpp \
@@ -19,7 +18,6 @@ SOURCES += \
 
 HEADERS += \
     aux_functions.h \
-    boundaryconditions.h \
     domain.h \
     element.h \
     elementq2.h \
