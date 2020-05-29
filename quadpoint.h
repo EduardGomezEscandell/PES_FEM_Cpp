@@ -1,7 +1,7 @@
 #ifndef QUADPOINT_H
 #define QUADPOINT_H
-#include "point.h"
 
+#include "point.h"
 #include "dependencies/Eigen/Dense"
 
 class QuadPoint: public Point

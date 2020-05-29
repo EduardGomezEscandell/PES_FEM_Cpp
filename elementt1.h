@@ -9,7 +9,7 @@ class ElementT1: public Element
 {
 public:
     ElementT1();
-    ElementT1(int element_id, Node* node_list, int* node_ids);
+    ElementT1(int element_id, std::vector<Node> * node_list, std::vector<int> node_ids);
 
     double * barycentric_to_cartesian(double L1, double L2, double L3);
     double * barycentric_to_cartesian(double *L);
@@ -17,6 +17,9 @@ public:
 
     Eigen::Matrix2d calc_jacobian();
     void assemble(cooMat *K, QuadData *qdata);
+
+    Eigen::Matrix2d get_jacobian();
+    Eigen::Matrix2d get_invJacobian();
 };
 
 #endif // ELEMENTT1_H

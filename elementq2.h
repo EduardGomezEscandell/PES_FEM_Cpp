@@ -10,7 +10,7 @@ public:
 
 
     ElementQ2();
-    ElementQ2(int element_id, Node* node_list, int *node_ids);
+    ElementQ2(int element_id, std::vector<Node> * node_list, std::vector<int> node_ids);
 };
 
 #endif // ELEMENTQ2_H

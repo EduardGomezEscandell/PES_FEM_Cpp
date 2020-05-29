@@ -33,17 +33,13 @@ std::vector<std::string> split_string(std::string txt, char separator){
 
 double *barycentric_to_cartesian(double *L, double corners[3][2]){
     // Returns a ponter to the coordinates in cartesian. Remember to free the pointer afterwards!
-    static double * cartesian = (double *) malloc(3 * sizeof(double));
+    static double cartesian[2];
     double L2 = 1 - L[0] - L[1];
     for(int i=0; i<3; i++){
         cartesian[i] = L[0] * corners[0][i]
                      + L[1] * corners[1][i]
                      +  L2  * corners[2][i];
     }
-    return cartesian;
+    return *(&cartesian);
 }
 
-
-//void plot_sparsity(SpMat M){
-
-//}

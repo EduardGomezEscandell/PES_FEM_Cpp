@@ -5,36 +5,23 @@ QuadData::QuadData(size_t n_nodes)
     // Quadrature lumped at the nodes
     npoints = (int) n_nodes;
 
-    points = (QuadPoint *) malloc( (npoints+1) * sizeof (*points));
-
     switch (npoints){
     case 3:
-        points[0] = QuadPoint(1, 0, 0);
-        points[1] = QuadPoint(1, 1, 0);
-        points[2] = QuadPoint(1, 0, 1);
+        points.emplace_back(1, 0, 0);
+        points.emplace_back(1, 1, 0);
+        points.emplace_back(1, 0, 1);
+        points.emplace_back();
         break;
     case 4:
-        points[0] = QuadPoint(1, -1, -1);
-        points[1] = QuadPoint(1,  1, -1);
-        points[2] = QuadPoint(1,  1,  1);
-        points[3] = QuadPoint(1, -1,  1);
-        break;
+        // Todo
     case 6:
-        points[0] = QuadPoint(1,  0,  0);
-        points[1] = QuadPoint(1,  1,  0);
-        points[2] = QuadPoint(1,  0,  1);
-        points[3] = QuadPoint(1, .5,  0);
-        points[4] = QuadPoint(1, .5, .5);
-        points[5] = QuadPoint(1,  0, .5);
+        // Todo
     case 9:
         // Todo
         break;
     default:
         throw "Only linear and quadratic, triangular and quadrilateral elements allowed";
-
     }
-
-    points[npoints] = QuadPoint();
 }
 
 QuadData::QuadData(std::string filename, int n_points_requested)
@@ -47,7 +34,8 @@ QuadData::QuadData(std::string filename, int n_points_requested)
     inputFile.open(filename);
 
     if(!inputFile.is_open()){
-        throw "Failed to load the quadrature data file";
+        std::cerr<<"Failed to load the quadrature data file"<<std::endl;
+        throw -1;
     }
 
     std::string line;
@@ -71,11 +59,11 @@ QuadData::QuadData(std::string filename, int n_points_requested)
         }
     }
     if(!success){
-        throw "Failed to find a suitable quadrature. Try lowering n_points_requested or use a file with higher quadrature lists.";
+        std::cerr<<"Failed to find a suitable quadrature. Try lowering n_points_requested or use a file with higher quadrature lists."<<std::endl;
+        throw -1;
     }
 
     npoints = n_points_found;
-    points = (QuadPoint *) malloc( (npoints+1) * sizeof(*points));
 
     // Reading values
     for(int i=0; i<npoints; i++){
@@ -83,14 +71,16 @@ QuadData::QuadData(std::string filename, int n_points_requested)
         if(inputFile.eof() || getline(inputFile,line), line[0]=='n'){
             char errormsg [100];
             sprintf(errormsg, "Quadrature block (n = %d) has fewer points than indicated. Aborting.", n_points_found);
-            throw errormsg;
+            std::cerr<<errormsg<<std::endl;
+            throw -1;
         }
         // Reading values.
         char separator = '\t';
         std::vector<std::string> split_data = split_string(line, separator);
 
         if(split_data.size() < 2 || split_data.size() > 3){
-            throw "Invalid math data file.";
+            std::cerr<<"Invalid math data file."<<std::endl;
+            throw -1;
         }
 
         double weight = stod(split_data[0]);
@@ -100,7 +90,7 @@ QuadData::QuadData(std::string filename, int n_points_requested)
             coordinates[i-1] =  stod(split_data[i]);
         }
 
-        points[i] = QuadPoint(weight, coordinates);
+        points.emplace_back(weight, coordinates);
     }
 
     // Checking if all points were read
@@ -112,39 +102,42 @@ QuadData::QuadData(std::string filename, int n_points_requested)
     inputFile.close();
 
     // Adding an end of array sentinel by adding an invalid weight at the end
-    points[npoints] = QuadPoint();
+    points.emplace_back();
 }
 
 
-void QuadData::square_quadrature(){
-    // Turns a segment quadrature into a square quadrature. Shape functions must be calculated afterwards.
-    int new_npoints = npoints*npoints;
-    QuadPoint *new_points = (QuadPoint *) malloc( (new_npoints+1) * sizeof(QuadPoint));
-
-    int k = 0;
-
-    double coords[] = {0,0};
-
-    for(QuadPoint * qi = points; qi->w > 0; qi++){
-        coords[0] = qi->coordinates[0];
-
-        for(QuadPoint * qj = points; qj->w > 0; qj++){
-            coords[1] = qj->coordinates[0];
-
-            double w = qi->w * qj->w;
-            // Fix: Following line throws a SEGFAULT when nnodes < 11
-            new_points[k] = QuadPoint(w, coords);
-            k++;
-        }
-    }
-
-    // Adding an end of array sentinel by adding an invalid weight at the end
-    new_points[k] = QuadPoint();
-
-    points = new_points;
-    npoints = new_npoints;
-    free(new_points);
+qiterator QuadData::pointsptr(){
+    return points.begin();
 }
+
+//void QuadData::square_quadrature(){
+//    // Turns a segment quadrature into a square quadrature. Shape functions must be calculated afterwards.
+//    int new_npoints = npoints*npoints;
+//    QuadPoint *new_points = (QuadPoint *) malloc( (new_npoints+1) * sizeof(QuadPoint));
+
+//    int k = 0;
+
+//    double coords[] = {0,0};
+
+//    for(qiterator qi = pointsptr(); qi->w > 0; qi++){
+//        coords[0] = qi->coordinates[0];
+
+//        for(qiterator qj = pointsptr(); qj->w > 0; qj++){
+//            coords[1] = qj->coordinates[0];
+
+//            double w = qi->w * qj->w;
+//            new_points[k] = QuadPoint(w, coords);
+//            k++;
+//        }
+//    }
+
+//    // Adding an end of array sentinel by adding an invalid weight at the end
+//    new_points[k] = QuadPoint();
+
+//    points = new_points;
+//    npoints = new_npoints;
+//    free(new_points);
+//}
 
 
 
@@ -158,13 +151,12 @@ void QuadData::initialize_shape_functions(int n_functions){
     double corners[3][2]= {{0,0},{1,0},{0,1}};
 
     // Looping obtaining shape fun for all integration points;
-    for(QuadPoint *q=points; q->w > 0; q++){
+    for(qiterator q = pointsptr(); q->w > 0; q++){
         total_weight += q->w;
 
         double *X = barycentric_to_cartesian(q->coordinates, corners);
         double x = X[0];
         double y = X[1];
-        free(X);
 
         // Shape functions
         q->N = Eigen::MatrixXd(1, n_functions);
@@ -185,27 +177,6 @@ void QuadData::initialize_shape_functions(int n_functions){
         q->gradN(1,2) =  1;
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

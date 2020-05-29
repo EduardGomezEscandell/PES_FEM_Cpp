@@ -4,9 +4,12 @@
 #include <stdlib.h>
 
 #include <vector>
+#include "quaddata.h"
 #include "dependencies/Eigen/Dense"
 #include "dependencies/Eigen/Sparse"
 typedef std::vector<Eigen::Triplet<double>> cooMat; //Typedef'd COO matrix
+
+typedef std::vector<Node>::iterator N_iterator; // Typedef'd pointer to node in vector
 
 class Element
 {
@@ -14,18 +17,19 @@ public:
     int id;
     int n_nodes;
 
-    Node ** nodes;
+    std::vector<N_iterator> nodes;
     double area;
 
     bool jacobian_is_calculated = false;
 
-    Eigen::Matrix2d jacobian;
-    Eigen::Matrix2d invJacobian;
-
     Element();
-    Element(int element_id, Node* node_list, int *node_ids, int nodes_per_elem);
+    Element(int element_id, std::vector<Node> * node_list, std::vector<int> node_ids, int nodes_per_elem);
 
     double ** get_coordinates();
+
+protected:
+    Eigen::Matrix2d jacobian;
+    Eigen::Matrix2d invJacobian;
 };
 
 #endif // ELEMENT_H

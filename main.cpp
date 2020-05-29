@@ -10,13 +10,11 @@
 #include "systemofequations.h"
 #include "settings.h"
 
-typedef Eigen::SparseMatrix<double> SpMat; // Typedef'ing sparse matrices
-
 int main(int argc, char** argv)
-{    
+{
     Settings settings(argc, argv);
     if(settings.only_help){
-        // Displayed help text. Aborting execution.
+        // Displayed help text. Nothing to calculate.
         return 0;
     }
 
@@ -26,7 +24,6 @@ int main(int argc, char** argv)
     }
     std::cout<<"Loading data ..."<<std::endl;
     // Loading quadrature
-    QuadData qdata_at_corners(3);
     QuadData qdata(settings.gauss_filename, n_points);
 
     // Loading geometry
@@ -43,7 +40,7 @@ int main(int argc, char** argv)
     // Assembling
     std::cout<<"Assembling system of equations..."<<std::endl;
     SysEq.assemble(&domain, &qdata);
-//    SysEq.plot_sparsity(print_file);
+    SysEq.plot_sparsity("here.pbm");
 
     // Solving
     std::cout<<"Solving..."<<std::endl;
@@ -51,7 +48,7 @@ int main(int argc, char** argv)
     std::cout<<"System solved with a residual norm of "<<error<<std::endl;
 
     // Obtaining gradients
-    domain.calc_gradients(qdata_at_corners);
+    domain.calc_gradients();
 
     // Storing results
     domain.export_result(settings.results_filename);

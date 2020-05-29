@@ -6,7 +6,7 @@ ElementT1::ElementT1() : Element()
     // Invalid element to use as sentinel
 }
 
-ElementT1::ElementT1(int element_id, Node* node_list, int* node_ids) : Element(element_id,node_list, node_ids, 3)
+ElementT1::ElementT1(int element_id, std::vector<Node> * node_list, std::vector<int> node_ids) : Element(element_id,node_list, node_ids, 3)
 {
 
 }
@@ -16,9 +16,9 @@ double *ElementT1::barycentric_to_cartesian(double *L){
     static double * cartesian = (double *) malloc(3 * sizeof(double));
     double L2 = 1 - L[0] - L[1];
     for(int i=0; i<3; i++){
-        cartesian[i] = L[0] * Element::nodes[0]->coordinates[i]
-                     + L[1] * Element::nodes[1]->coordinates[i]
-                     +  L2  * Element::nodes[2]->coordinates[i];
+        cartesian[i] = L[0] * nodes[0]->coordinates[i]
+                     + L[1] * nodes[1]->coordinates[i]
+                     +  L2  * nodes[2]->coordinates[i];
     }
     return cartesian;
 }
@@ -51,15 +51,11 @@ Eigen::Matrix2d ElementT1::calc_jacobian(){
 void ElementT1::assemble(cooMat * K, QuadData *qdata){
     calc_jacobian();
 
-    Eigen::Matrix3d k_local;
+    Eigen::MatrixXd k_local = Eigen::MatrixXd::Zero(n_nodes, n_nodes);
 
-    k_local <<0, 0, 0,
-              0, 0, 0,
-              0, 0, 0;
-
-    for(QuadPoint *q=qdata->points; q->w >= 0; q++){
+    for(qiterator q=qdata->points.begin(); q->w >= 0; q++){
         Eigen::MatrixXd gradN;
-        gradN = invJacobian * q->gradN;
+        gradN = get_invJacobian() * q->gradN;
 
         k_local += q->w * (gradN.transpose() * gradN);
     }
@@ -71,4 +67,12 @@ void ElementT1::assemble(cooMat * K, QuadData *qdata){
             K->emplace_back(nodes[i]->id, nodes[j]->id, k_local(i,j));
         }
     }
+}
+
+Eigen::Matrix2d ElementT1::get_jacobian(){
+    return jacobian;
+}
+
+Eigen::Matrix2d ElementT1::get_invJacobian(){
+    return invJacobian;
 }

@@ -23,10 +23,12 @@ Settings::Settings(int argc, char ** argv)
                     print_help();
                 }
                 else if (argv[1][1] == 'f') { // If the -f was enabled with only 1 argument, then there is an error
-                    throw "The -f option requires three fields:\n$PES_FEM_Cpp -f <node file> <mesh file> <boundaries file>\n Run the -h command for more info.";
+                    std::cerr<<"The -f option requires three fields:\n$PES_FEM_Cpp -f <node file> <mesh file> <boundaries file>\n Run the -h command for more info."<<std::endl;
+                    throw -1;
                 }
                 else{
-                    throw "Unrecognized option. \n Run the -h command for more info.";
+                    std::cerr<<"Unrecognized option. \n Run the -h command for more info."<<std::endl;
+                    throw -1;
                 }
             }
             break;
@@ -45,10 +47,12 @@ Settings::Settings(int argc, char ** argv)
                     print_help();
                 }
                 else if (argv[1][1] == 'f') { // If the -f was enabled with only 2 arguments, then there is an error
-                    throw "The -f option requires three fields:\n$PES_FEM_Cpp -f <node file> <mesh file> <boundaries file>\n Run the -h command for more info.";
+                    std::cerr<<"The -f option requires three fields:\n$PES_FEM_Cpp -f <node file> <mesh file> <boundaries file>\n Run the -h command for more info."<<std::endl;
+                    throw -1;
                 }
                 else{
-                    throw "Unrecognized option. \n Run the -h command for more info.";
+                    std::cerr<<"Unrecognized option. \n Run the -h command for more info."<<std::endl;
+                    throw -1;
                 }
             }
             break;
@@ -57,7 +61,8 @@ Settings::Settings(int argc, char ** argv)
      */
         case 4:
             if(argv[1][0] != '-'){
-                throw "Wrong number of arguments";
+                std::cerr<<"Wrong number of arguments"<<std::endl;
+                throw -1;
             }
             if(argv[1][1] == 'h'){
                 print_help();
@@ -68,7 +73,8 @@ Settings::Settings(int argc, char ** argv)
                 boco_filename = argv[4];
             }
             else{
-                throw "Unrecognized option.\n Run the -h command for more info.";
+                std::cerr<<"Unrecognized option.\n Run the -h command for more info."<<std::endl;
+                throw -1;
             }
             break;
     /*
@@ -76,7 +82,8 @@ Settings::Settings(int argc, char ** argv)
      */
         case 5:
             if(argv[1][0] != '-'){
-                throw "Wrong number of arguments\n Run the -h command for more info.";
+                std::cerr<<"Wrong number of arguments\n Run the -h command for more info."<<std::endl;
+                throw -1;
             }
             if(argv[1][1] == 'h'){
                 print_help();
@@ -88,14 +95,16 @@ Settings::Settings(int argc, char ** argv)
                 read_quadrature_choice(argv[5]);
             }
             else{
-                throw "Unrecognized option. \n Run the -h command for more info.";
+                std::cerr<<"Unrecognized option. \n Run the -h command for more info."<<std::endl;
+                throw -1;
             }
             break;
     /*
      *  SIX OR MORE ARGUMENTS
      */
         default:
-            throw "Wrong number of arguments \n Run the -h command for more info.";
+            std::cerr<<"Wrong number of arguments \n Run the -h command for more info."<<std::endl;
+            throw -1;
     }
 }
 
@@ -103,11 +112,20 @@ void Settings::print_help(){
     // Help
     std::cout<<"HELP"<<std::endl;
     std::cout<<"Ways of running the program:"<<std::endl;
-    std::cout<<"1.Run this program with no options to see a sample.\n  Default options are the same as\n  $PES_FEM_Cpp 5T1 3"<<std::endl;
-    std::cout<<"2.Chose the mesh to be run:\n  $PES_FEM_Cpp <mesh number><element type><order>\n  Avaliable meshes: 1 through 5\n  Available types: Q, T\n  Available Orders: 1, 2"<<std::endl;
-    std::cout<<"3.Chose the quadrature size:\n  $PES_FEM_Cpp <mesh number><element type><order> <quadrature>\n  Available quadratures: 1 to 99"<<std::endl;
-    std::cout<<"4.Chose some other mesh file:\n $PES_FEM_Cpp -f <path_to_nodes> <path_to_elements> <path_to_boundaries>"<<std::endl;
-    std::cout<<"5.Chose some other mesh file and quadrature:\n $PES_FEM_Cpp -f <path_to_nodes> <path_to_elements> <path_to_boundaries> <quadrature>"<<std::endl;
+    std::cout<<std::endl;
+    std::cout<<"1.Run this program with no options to see an example."<<std::endl;
+    std::cout<<std::endl;
+    std::cout<<"2.Chose the problem to be solved:\n  $ ./PES_FEM_Cpp <mesh number><element shape><order>\n  Avaliable meshes: 1 through 5\n  Available types: Q, T\n  Available Orders: 1, 2"<<std::endl;
+    std::cout<<"\n  EXAMPLE: Running Mesh #5, quadrilateral elements, quadratic:\n  $ ./PES_FEM_Cpp 5Q2"<<std::endl;
+    std::cout<<std::endl;
+    std::cout<<"3.Chose the quadrature size:\n  $ ./PES_FEM_Cpp <mesh number><element shape><order> <quadrature>\n  Available quadratures: 1 to 99"<<std::endl;
+    std::cout<<"\n  EXAMPLE: Running Mesh #4, triangular elements, linear, 7 point quadrature:\n  $ ./PES_FEM_Cpp 4T1 7"<<std::endl;
+    std::cout<<std::endl;
+    std::cout<<"4.Chose some other mesh file:\n  $ ./PES_FEM_Cpp -f <path_to_nodes> <path_to_elements> <path_to_boundaries>"<<std::endl;
+    std::cout<<"\n  EXAMPLE: Running ~/Desktop/mymesh:\n  $ ./PES_FEM_Cpp -f  ""~/Desktop/mymesh/nodes.bat""  ""~/Desktop/mymesh/elems.bat"" ""~/Desktop/mymesh/bc.bat"" "<<std::endl;
+    std::cout<<std::endl;
+    std::cout<<"5.Chose some other mesh file and quadrature:\n  $ ./PES_FEM_Cpp -f <path_to_nodes> <path_to_elements> <path_to_boundaries> <quadrature>"<<std::endl;
+    std::cout<<"\n  EXAMPLE: Running ~/Desktop/mymesh/... with 13 point quadrture:\n  $ ./PES_FEM_Cpp -f  ""~/Desktop/mymesh/nodes.bat""  ""~/Desktop/mymesh/elems.bat"" ""~/Desktop/mymesh/bc.bat"" 13"<<std::endl;
     only_help = true;
 }
 
@@ -133,7 +151,8 @@ std::string Settings::elemType_interpreter(char raw){
         case 'Q':
             return "quad";
         default:
-            throw "Unrecognized element type. Try T or Q.";
+            std::cerr<<"Unrecognized element type. Try T or Q."<<std::endl;
+            throw -1;
     }
 }
 
@@ -144,6 +163,7 @@ std::string Settings::elemOrder_interpreter(char raw){
         case '2':
             return "quad";
         default:
-            throw "Unrecognized element order. Try 1 or 2.";
+            std::cerr<<"Unrecognized element order. Try 1 or 2."<<std::endl;
+            throw -1;
     }
 }

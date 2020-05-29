@@ -36,4 +36,23 @@ public:
     void calc_gradients(Domain * dom);
 };
 
+
+// Using macro so I don't need to use basically the same method for all four element types
+#define assemble_local(K_coo, E, qdata) do{                             \
+    E->calc_jacobian();                                                    \
+    Eigen::MatrixXd k_local = Eigen::MatrixXd::Zero(E->n_nodes, E->n_nodes);  \
+    for(qiterator q=qdata->points.begin(); q->w >= 0; q++){             \
+        Eigen::MatrixXd gradN;                                          \
+        gradN = E->get_invJacobian() * q->gradN;                        \
+        k_local += q->w * (gradN.transpose() * gradN);                  \
+    }                                                                   \
+    k_local *= E->area / qdata->total_weight;                           \
+    for(int i=0; i<E->n_nodes; i++){                                    \
+        for(int j=0; j<E->n_nodes; j++){                                \
+            K_coo.emplace_back(E->nodes[i]->id, E->nodes[j]->id, k_local(i,j));  \
+        }                                                               \
+    }                                                                   \
+}while(0)
+
+
 #endif // SYSTEMOFEQUATIONS_H

@@ -8,10 +8,14 @@
 #include "aux_functions.h" // split_string, barycentric_to_cartesian
 #include "quadpoint.h"
 
+typedef std::vector<QuadPoint>::iterator qiterator;
+
 class QuadData
 {
 public:
-    QuadPoint* points;
+    std::vector<QuadPoint> points;
+    qiterator pointsptr();
+
     int npoints;
     double total_weight;
 
