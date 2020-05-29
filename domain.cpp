@@ -1,6 +1,6 @@
 #include "domain.h"
 
-Domain::Domain(std::string node_file, std::string mesh_file)
+Domain::Domain(Settings settings)
 {
     // Importing nodes
 
@@ -13,7 +13,7 @@ Domain::Domain(std::string node_file, std::string mesh_file)
 
     // Opening coordinates file
     std::ifstream inFile;
-    inFile.open(node_file);
+    inFile.open(settings.node_filename);
 
     while(!inFile.eof()){
         std::string line;
@@ -51,11 +51,19 @@ Domain::Domain(std::string node_file, std::string mesh_file)
     // Importing elements
 
     inFile.close();
-    inFile.open(mesh_file);
+    inFile.open(settings.mesh_filename);
 
-    size_t max_elem = 0;            // Current memory allocated
+    size_t max_elem_T1 = 0;            // Current memory allocated
+//    size_t max_elem_T2 = 0;
+//    size_t max_elem_Q1 = 0;
+    size_t max_elem_Q2 = 0;
+
     size_increment = 200;           // Increase of memory at realloc
-    n_elems = 0;
+
+    n_elemsT1 = 0;
+    n_elemsT2 = 0;
+    n_elemsQ1 = 0;
+    n_elemsQ2 = 0;
 
     size_t nodes_per_elem;          // Nodes per element
 
@@ -74,31 +82,7 @@ Domain::Domain(std::string node_file, std::string mesh_file)
         data = split_string(line, ' ');
 
         // Parse the element type at the first iteration
-        if(n_elems == 0){
-            nodes_per_elem = data.size();
-            switch(nodes_per_elem){
-            case 3:
-                max_elem += n_elems;
-                elementsT1 = (ElementT1*) malloc(max_elem * sizeof(ElementT1));
-                break;
-            default:
-                throw "Element type not implemented";
-            }
-        }
-        // Check that all subsequent elements are of the same type
-        else if(data.size() != nodes_per_elem) {
-            throw "Inconsistent element type";
-        }
-
-        // If it runs out of memory, increase it
-        if(n_elems == max_elem){
-            max_elem += size_increment;
-            elementsT1 = (ElementT1 *) realloc(elementsT1, max_elem * sizeof(*elementsT1));
-            if(elementsT1 == NULL){
-                free(elementsT1);
-                throw "Failed to reallocate element list";
-            }
-        }
+        nodes_per_elem = data.size();
 
         // Reading the connectivity
         int *node_ids = (int *)malloc(data.size() * sizeof (int));
@@ -106,29 +90,76 @@ Domain::Domain(std::string node_file, std::string mesh_file)
             node_ids[i] = stoi(data[i]) - 1; // Changing to 0-indexing
         }
 
-        // Creating Element object
-        switch(nodes_per_elem){
+        switch (nodes_per_elem) {
         case 3:
-            elementsT1[n_elems] = ElementT1(n_elems, nodes, node_ids);
-            n_elems++;
+            new_T1_element(node_ids, &max_elem_T1, size_increment);
             break;
+        case 9:
+            new_Q2_element(node_ids, &max_elem_Q2, size_increment);
+            break;
+        default:
+            throw "Unrecognized element type";
         }
+
+
     }
 
-     //Adding sentinel
-    switch(nodes_per_elem){
-    case 3:
-        if(n_elems == max_elem){
-            max_elem += 1;
-            elementsT1 = (ElementT1 *) realloc(elementsT1, max_elem * sizeof(*elementsT1));
-        }
-        elementsT1[n_elems] = ElementT1();
-        n_elems++;
-        break;
+     //Adding sentinels
+
+    if(n_elemsT1 == max_elem_T1){
+        max_elem_T1 += 1;
+        elementsT1 = (ElementT1 *) realloc(elementsT1, max_elem_T1 * sizeof(*elementsT1));
     }
+    elementsT1[n_elemsT1] = ElementT1();
+
 
     inFile.close();
 }
+
+void Domain::new_T1_element(int * node_ids, size_t * max_elem, size_t size_increment){
+    if(n_elemsT1 == 0){
+        *max_elem += n_elemsT1;
+        elementsT1 = (ElementT1*) malloc(*max_elem * sizeof(ElementT1));
+    }
+
+    // If it runs out of memory, increase it
+    if(n_elemsT1 == *max_elem){
+        *max_elem += size_increment;
+        elementsT1 = (ElementT1 *) realloc(elementsT1, *max_elem * sizeof(*elementsT1));
+        if(elementsT1 == NULL){
+            free(elementsT1);
+            throw "Failed to reallocate element list";
+        }
+    }
+
+    // Creating Element object
+    elementsT1[n_elemsT1] = ElementT1(n_elemsT1, nodes, node_ids);
+    n_elemsT1++;
+}
+
+
+void Domain::new_Q2_element(int * node_ids, size_t * max_elem, size_t size_increment){
+    if(n_elemsQ2 == 0){
+        max_elem += n_elemsQ2;
+        elementsQ2 = (ElementQ2*) malloc(*max_elem * sizeof(ElementQ2));
+    }
+
+    // If it runs out of memory, increase it
+    if(n_elemsQ2 == *max_elem){
+        *max_elem += size_increment;
+        elementsQ2 = (ElementQ2 *) realloc(elementsQ2, *max_elem * sizeof(*elementsQ2));
+        if(elementsQ2 == NULL){
+            free(elementsQ2);
+            throw "Failed to reallocate element list";
+        }
+    }
+
+    // Creating Element object
+    elementsQ2[n_elemsQ2] = ElementQ2(n_elemsQ2, nodes, node_ids);
+    n_elemsQ2++;
+}
+
+
 
 void Domain::printnodes(){
     // Prints the coordinates to the console. NOT TESTED.
@@ -160,7 +191,7 @@ void Domain::printelems()
         sprintf(buffer, "%5d:",E->id);
         std::cout<<buffer;
         for(int n=0; n < E->n_nodes; n++){
-            sprintf(buffer," %5d", E->nodes[n].id);
+            sprintf(buffer," %5d", E->nodes[n]->id);
             std::cout<<buffer;
         }
         std::cout<<std::endl;
@@ -178,7 +209,7 @@ void Domain::printelems(std::string filename)
         sprintf(buffer, "%5d:",E->id);
         fileOut<<buffer;
         for(int n=0; n < E->n_nodes; n++){
-            sprintf(buffer," %5d", E->nodes[n].id);
+            sprintf(buffer," %5d", E->nodes[n]->id);
             fileOut<<buffer;
         }
         fileOut<<std::endl;
@@ -186,3 +217,51 @@ void Domain::printelems(std::string filename)
     fileOut.close();
 }
 
+size_t Domain::n_elems(){
+    return n_elemsT1 + n_elemsT2 + n_elemsQ1 + n_elemsQ2;
+}
+
+void Domain::calc_gradients(QuadData qdata_corners_T1){
+    qdata_corners_T1.initialize_shape_functions(3);
+
+    for(ElementT1 * E = elementsT1; E->id >=0; E++){
+        Eigen::Vector3d U_local;
+        for(int i=0; i<E->n_nodes; i++){
+            U_local(i) = E->nodes[i]->u;
+        }
+
+        Eigen::MatrixXd gradU = Eigen::MatrixXd::Zero(2,E->n_nodes);
+        Node ** n = E->nodes;
+        for(QuadPoint * q=qdata_corners_T1.points; q->w >= 0; q++){
+            Eigen::MatrixXd gradN = E->invJacobian * q->gradN;
+            (**n).grad_u = gradN * U_local;
+            n++;
+        }
+    }
+    gradients_calculated = true;
+}
+
+
+void Domain::export_result(std::string filename){
+
+    std::ofstream outFile;
+    outFile.open(filename);
+
+    if(gradients_calculated){
+        // Printing solution and gradients
+        for(Node * n = nodes; n->id >=0; n++){
+            char buffer [100];
+            sprintf(buffer, "%10.6f %10.6f %10.6f\n", n->u, n->grad_u(0), n->grad_u(1));
+            outFile<< buffer;
+        }
+    } else {
+        // Printing only the solution
+        for(Node * n = nodes; n->id >=0; n++){
+                char buffer [100];
+                sprintf(buffer, "%10.6f\n", n->u);
+                outFile<< buffer;
+        }
+    }
+
+    outFile.close();
+}

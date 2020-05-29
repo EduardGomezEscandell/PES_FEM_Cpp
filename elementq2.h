@@ -7,9 +7,10 @@
 class ElementQ2 : public Element
 {
 public:
-    int n_nodes = 9;
+
+
+    ElementQ2();
     ElementQ2(int element_id, Node* node_list, int *node_ids);
-    double get_area();
 };
 
 #endif // ELEMENTQ2_H

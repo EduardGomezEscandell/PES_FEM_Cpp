@@ -9,6 +9,5 @@
 
 std::vector<std::string> split_string(std::string txt, char separator);
 double *barycentric_to_cartesian(double *L, double corners[3][2]);
-//void plot_sparsity(SpMat M);
 
 #endif

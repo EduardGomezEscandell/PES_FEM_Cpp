@@ -14,6 +14,7 @@ SOURCES += \
         point.cpp \
         quaddata.cpp \
         quadpoint.cpp \
+        settings.cpp \
         systemofequations.cpp
 
 HEADERS += \
@@ -26,4 +27,5 @@ HEADERS += \
     point.h \
     quaddata.h \
     quadpoint.h \
+    settings.h \
     systemofequations.h

@@ -1,8 +1,46 @@
 #include "quaddata.h"
 
+QuadData::QuadData(size_t n_nodes)
+{
+    // Quadrature lumped at the nodes
+    npoints = (int) n_nodes;
+
+    points = (QuadPoint *) malloc( (npoints+1) * sizeof (*points));
+
+    switch (npoints){
+    case 3:
+        points[0] = QuadPoint(1, 0, 0);
+        points[1] = QuadPoint(1, 1, 0);
+        points[2] = QuadPoint(1, 0, 1);
+        break;
+    case 4:
+        points[0] = QuadPoint(1, -1, -1);
+        points[1] = QuadPoint(1,  1, -1);
+        points[2] = QuadPoint(1,  1,  1);
+        points[3] = QuadPoint(1, -1,  1);
+        break;
+    case 6:
+        points[0] = QuadPoint(1,  0,  0);
+        points[1] = QuadPoint(1,  1,  0);
+        points[2] = QuadPoint(1,  0,  1);
+        points[3] = QuadPoint(1, .5,  0);
+        points[4] = QuadPoint(1, .5, .5);
+        points[5] = QuadPoint(1,  0, .5);
+    case 9:
+        // Todo
+        break;
+    default:
+        throw "Only linear and quadratic, triangular and quadrilateral elements allowed";
+
+    }
+
+    points[npoints] = QuadPoint();
+}
+
 QuadData::QuadData(std::string filename, int n_points_requested)
 {
-    /* Constructor that reads the quadarture points and weights from a txt file.
+    /*
+     * Constructor that reads the quadarture points and weights from a txt file.
      * The quadrature will have either n_points_requested, or the immediate next available quadrature.
      */
     std::ifstream inputFile;
@@ -24,7 +62,7 @@ QuadData::QuadData(std::string filename, int n_points_requested)
         {
              // Line is "n = NUMBER". Reading NUMBER up to 10 characters should be by far sufficient.
             std::string number_str = line.substr(4,10);
-            n_points_found = stoi(number_str); //Converting char to int
+            n_points_found = std::stoi(number_str); //Converting string to int
             if(n_points_found >= n_points_requested){
                 success = true;
                 break;
@@ -36,11 +74,11 @@ QuadData::QuadData(std::string filename, int n_points_requested)
         throw "Failed to find a suitable quadrature. Try lowering n_points_requested or use a file with higher quadrature lists.";
     }
 
-    QuadData::npoints = n_points_found;
-    QuadData::points = (QuadPoint *) malloc( (QuadData::npoints+1) * sizeof(*points));
+    npoints = n_points_found;
+    points = (QuadPoint *) malloc( (npoints+1) * sizeof(*points));
 
     // Reading values
-    for(int i=0; i<n_points_found; i++){
+    for(int i=0; i<npoints; i++){
         // Catching errors
         if(inputFile.eof() || getline(inputFile,line), line[0]=='n'){
             char errormsg [100];
@@ -62,7 +100,7 @@ QuadData::QuadData(std::string filename, int n_points_requested)
             coordinates[i-1] =  stod(split_data[i]);
         }
 
-        QuadData::points[i] = QuadPoint(weight, coordinates);
+        points[i] = QuadPoint(weight, coordinates);
     }
 
     // Checking if all points were read
@@ -71,8 +109,10 @@ QuadData::QuadData(std::string filename, int n_points_requested)
         sprintf(errormsg, "Quadrature block (n = %d) has more points than indicated. Aborting.", n_points_found);
     }
 
+    inputFile.close();
+
     // Adding an end of array sentinel by adding an invalid weight at the end
-    QuadData::points[n_points_found] = QuadPoint();
+    points[npoints] = QuadPoint();
 }
 
 
@@ -109,7 +149,7 @@ void QuadData::square_quadrature(){
 
 
 
-void QuadData::initialize_shape_functions(ElementT1 sample_element){
+void QuadData::initialize_shape_functions(int n_functions){
 
     // Obtaining sum of weights (used for integration)
     total_weight = 0;
@@ -127,13 +167,13 @@ void QuadData::initialize_shape_functions(ElementT1 sample_element){
         free(X);
 
         // Shape functions
-        q->N = Eigen::MatrixXd(1, sample_element.n_nodes);
+        q->N = Eigen::MatrixXd(1, n_functions);
         q->N(0) = 1 - x - y;
         q->N(1) = x;
         q->N(2) = y;
 
         // Gradient
-        q->gradN = Eigen::MatrixXd(2, sample_element.n_nodes);
+        q->gradN = Eigen::MatrixXd(2, n_functions);
         // N1
         q->gradN(0,0) = -1;
         q->gradN(1,0) = -1;

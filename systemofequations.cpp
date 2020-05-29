@@ -6,41 +6,35 @@ SystemOfEquations::SystemOfEquations()
 
 }
 
-void SystemOfEquations::assemble(Domain domain, QuadData qdata){
+void SystemOfEquations::assemble(Domain * domain, QuadData * qdata){
 //    K_coo.reserve(5 * domain.n_nodes); // Quick approximation of expected no of entries
 
-    size = domain.n_nodes + dirichlet_nodes.size();
+    size = domain->n_nodes + dirichlet_nodes.size();
     F = Eigen::VectorXd::Zero(size);
 
-    for(ElementT1 *E = domain.elementsT1; E->id >=0; E++){
-
-        E->calc_jacobian();
-
-        Eigen::Matrix3d k_local;
-        k_local <<0, 0, 0,
-                  0, 0, 0,
-                  0, 0, 0;
-
-        for(QuadPoint *q=qdata.points; q->w >= 0; q++){
-            Eigen::MatrixXd gradN;
-            gradN = E->jacobian.inverse() * q->gradN;
-
-            k_local += q->w * (gradN.transpose() * gradN);
-        }
-
-        k_local *= E->get_area() / qdata.total_weight;
-
-        for(int i=0; i<3; i++){
-            for(int j=0; j<3; j++){
-                K_coo.emplace_back(E->nodes[i].id, E->nodes[j].id, k_local(i,j));
-            }
-        }
+    for(ElementT1 *E = domain->elementsT1; E->id >=0; E++){
+        E->assemble(&K_coo, qdata);
     }
+
+    // TODO
+
+//    for(ElementT2 *E = domain->elementsT1; E->id >=0; E++){
+//        E->assemble(&K_coo, qdata);
+//    }
+
+//    for(ElementQ1 *E = domain->elementsT1; E->id >=0; E++){
+//        E->assemble(&K_coo, qdata);
+//    }
+
+//    for(ElementQ2 *E = domain->elementsT1; E->id >=0; E++){
+//        E->assemble(&K_coo, qdata);
+//    }
+
 
     // Dirichlet Boundary condition via the penalty method
     for(size_t i=0; i<dirichlet_nodes.size(); i++)
     {
-        int boc = i + domain.n_nodes;     // Its ID as a boundary condition
+        int boc = i + domain->n_nodes;     // Its ID as a boundary condition
         int dof = dirichlet_nodes[i]->id; // Its ID as a dof
 
         K_coo.emplace_back(boc, dof, 1.0);
@@ -63,7 +57,7 @@ void SystemOfEquations::assemble(Domain domain, QuadData qdata){
     K.makeCompressed();
 }
 
-void SystemOfEquations::load_bc(Domain dom, std::string filename)
+void SystemOfEquations::load_bc(Domain * dom, std::string filename)
 {
     std::ifstream inFile;
     inFile.open(filename);
@@ -83,7 +77,7 @@ void SystemOfEquations::load_bc(Domain dom, std::string filename)
 
         // Removing invalid nodes (avoiding SEGFAULT)
         int node_id = stoi(data[1]) - 1; // File uses 1-indexed counting and C++ uses 0-indexed
-        if(node_id >= (int) dom.n_nodes){
+        if(node_id >= (int) dom->n_nodes){
             throw "Boundary file includes nodes not present in the coordinates file";
         }
 
@@ -113,7 +107,7 @@ void SystemOfEquations::load_bc(Domain dom, std::string filename)
         }
 
         // Storing info
-        Node * this_node = &(dom.nodes[node_id]);
+        Node * this_node = &(dom->nodes[node_id]);
         this_node->bc_value = bc_value;
         this_node->bc_type = bc_type;
         switch(bc_type){
@@ -129,10 +123,22 @@ void SystemOfEquations::load_bc(Domain dom, std::string filename)
 }
 
 double SystemOfEquations::solve(){
+    // Solves the system
     Eigen::SimplicialCholesky<SpMat> chol(K);
     U = chol.solve(F);
     Eigen::VectorXd R= F - K*U;
     return R.norm();
+}
+
+double SystemOfEquations::solve(Domain * dom){
+    // Solves and stores the values at the nodes
+    double error = solve();
+
+    for(Node * n = dom->nodes; n->id >=0; n++){
+        n->u = U(n->id);
+    }
+
+    return error;
 }
 
 void SystemOfEquations::plot_sparsity(std::string filename){
@@ -175,17 +181,4 @@ void SystemOfEquations::plot_sparsity(std::string filename){
     }
 
     outpFile.close();
-}
-
-void SystemOfEquations::export_result(std::string filename){
-
-    std::ofstream outFile;
-    outFile.open(filename);
-
-    int n_nodes = size - dirichlet_nodes.size(); // Redundant but this way we don't need to call domain
-
-    for(int i = 0; i<n_nodes; i++){
-        outFile << U(i)<<std::endl;
-    }
-    outFile.close();
 }
