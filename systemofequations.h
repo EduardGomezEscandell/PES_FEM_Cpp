@@ -38,7 +38,7 @@ public:
 
 
 // Using macro so I don't need to use basically the same method for all four element types
-#define assemble_local(K_coo, E, qdata) do{                             \
+#define ASSEMBLE_LOCAL(K_coo, E, qdata) do{                             \
     E->calc_jacobian();                                                    \
     Eigen::MatrixXd k_local = Eigen::MatrixXd::Zero(E->n_nodes, E->n_nodes);  \
     for(qiterator q=qdata->points.begin(); q->w >= 0; q++){             \

@@ -71,6 +71,8 @@ Settings::Settings(int argc, char ** argv)
                 node_filename = argv[2];
                 mesh_filename = argv[3];
                 boco_filename = argv[4];
+                results_dat_filename = "../PES_FEM_Cpp/results/result.dat";
+                results_vtk_filename = "../PES_FEM_Cpp/results/result.vtk";
             }
             else{
                 std::cerr<<"Unrecognized option.\n Run the -h command for more info."<<std::endl;
@@ -93,6 +95,8 @@ Settings::Settings(int argc, char ** argv)
                 mesh_filename = argv[3];
                 boco_filename = argv[4];
                 read_quadrature_choice(argv[5]);
+                results_dat_filename = "../PES_FEM_Cpp/results/result.dat";
+                results_vtk_filename = "../PES_FEM_Cpp/results/result.vtk";
             }
             else{
                 std::cerr<<"Unrecognized option. \n Run the -h command for more info."<<std::endl;
@@ -137,7 +141,8 @@ void Settings::read_mesh_coice(char ** argv){
     mesh_filename = directory + "Element_2D_" + elemType + "_" + elemOrder + ".dat";
     node_filename = directory +    "Node_2D_" + elemType + "_" + elemOrder + ".dat";
     boco_filename = directory + "boundaries.dat";
-    results_filename= directory + "result.dat";
+    results_dat_filename= directory + "result.dat";
+    results_vtk_filename= directory + "result.vtk";
 }
 
 void Settings::read_quadrature_choice(char * raw){

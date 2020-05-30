@@ -7,8 +7,10 @@ SOURCES += \
         aux_functions.cpp \
         domain.cpp \
         element.cpp \
+        elementq1.cpp \
         elementq2.cpp \
         elementt1.cpp \
+        elementt2.cpp \
         main.cpp \
         node.cpp \
         point.cpp \
@@ -21,8 +23,10 @@ HEADERS += \
     aux_functions.h \
     domain.h \
     element.h \
+    elementq1.h \
     elementq2.h \
     elementt1.h \
+    elementt2.h \
     node.h \
     point.h \
     quaddata.h \

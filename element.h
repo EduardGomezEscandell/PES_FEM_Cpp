@@ -27,6 +27,8 @@ public:
 
     double ** get_coordinates();
 
+    int connectivity_line_vtk(char * buffer);
+
 protected:
     Eigen::Matrix2d jacobian;
     Eigen::Matrix2d invJacobian;

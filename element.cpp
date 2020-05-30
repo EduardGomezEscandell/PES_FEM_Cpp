@@ -23,3 +23,21 @@ double ** Element::get_coordinates(){
     }
     return X;
 }
+
+
+int Element::connectivity_line_vtk(char * buffer){
+    std::string line ="";
+    sprintf(buffer, "   %10d", n_nodes);
+    line += std::string(buffer);
+
+    for(int i=0; i<n_nodes; i++){
+        sprintf(buffer, "   %10d", nodes[i]->id);
+        line += std::string(buffer);
+    }
+
+    line += "\n";
+
+    line.copy(buffer, line.size()+1);
+
+    return line.size()+1;
+}

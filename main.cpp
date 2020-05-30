@@ -51,5 +51,6 @@ int main(int argc, char** argv)
     domain.calc_gradients();
 
     // Storing results
-    domain.export_result(settings.results_filename);
+    domain.export_result_dat(settings);
+    domain.export_result_vtk(settings);
 }

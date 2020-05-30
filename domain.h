@@ -4,28 +4,34 @@
 #include "settings.h"
 
 #include "elementt1.h"
+#include "elementt2.h"
+#include "elementq1.h"
 #include "elementq2.h"
 
 #include "node.h"
 #include "aux_functions.h" // split_string
 
-#include <stdio.h> // sprintf
+#include <stdio.h> // sprintf, fprintf
 #include <vector>
 #include <fstream>
 #include <iostream>
 
 typedef std::vector<ElementT1>::iterator T1_iterator;
-//typedef std::vector<ElementT2>::iterator T2_iterator;
-//typedef std::vector<ElementQ1>::iterator Q1_iterator;
+typedef std::vector<ElementT2>::iterator T2_iterator;
+typedef std::vector<ElementQ1>::iterator Q1_iterator;
 typedef std::vector<ElementQ2>::iterator Q2_iterator;
 
 class Domain
 {
 public:
     std::vector<ElementT1> elementsT1;
+    std::vector<ElementT2> elementsT2;
+    std::vector<ElementQ1> elementsQ1;
     std::vector<ElementQ2> elementsQ2;
 
     T1_iterator T1ptr();
+    T2_iterator T2ptr();
+    Q1_iterator Q1ptr();
     Q2_iterator Q2ptr();
 
     std::vector<Node> nodes;
@@ -42,7 +48,8 @@ public:
 
     void calc_gradients();
 
-    void export_result(std::string filename);
+    void export_result_dat(Settings settings);
+    void export_result_vtk(Settings settings);
 
     size_t n_elems();
     size_t n_nodes();

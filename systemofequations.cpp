@@ -13,21 +13,7 @@ void SystemOfEquations::assemble(Domain * domain, QuadData * qdata){
     F = Eigen::VectorXd::Zero(size);
 
     for(T1_iterator E = domain->T1ptr(); E->id >=0; E++){
-        do{                             \
-            E->calc_jacobian();                                                    \
-            Eigen::MatrixXd k_local = Eigen::MatrixXd::Zero(E->n_nodes, E->n_nodes);  \
-            for(qiterator q=qdata->points.begin(); q->w >= 0; q++){             \
-                Eigen::MatrixXd gradN;                                          \
-                gradN = E->get_invJacobian() * q->gradN;                        \
-                k_local += q->w * (gradN.transpose() * gradN);                  \
-            }                                                                   \
-            k_local *= E->area / qdata->total_weight;                           \
-            for(int i=0; i<E->n_nodes; i++){                                    \
-                for(int j=0; j<E->n_nodes; j++){                                \
-                    K_coo.emplace_back(E->nodes[i]->id, E->nodes[j]->id, k_local(i,j));  \
-                }                                                               \
-            }                                                                   \
-        }while(0);
+        ASSEMBLE_LOCAL(K_coo, E, qdata);
     }
 
 //    for(Q2_iterator E = domain->Q2ptr(); E->id >=0; E++){

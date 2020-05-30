@@ -14,7 +14,8 @@ public:
     std::string node_filename = "../PES_FEM_Cpp/mesh_data/PES_2D_tri_lin/Mesh1/Node_2D_tri_lin.dat";
     std::string mesh_filename = "../PES_FEM_Cpp/mesh_data/PES_2D_tri_lin/Mesh1/Element_2D_tri_lin.dat";
     std::string boco_filename = "../PES_FEM_Cpp/mesh_data/PES_2D_tri_lin/Mesh1/boundaries.dat";
-    std::string results_filename = "../PES_FEM_Cpp/mesh_data/PES_2D_tri_lin/Mesh1/result.dat";
+    std::string results_dat_filename = "../PES_FEM_Cpp/mesh_data/PES_2D_tri_lin/Mesh1/result.dat";
+    std::string results_vtk_filename = "../PES_FEM_Cpp/mesh_data/PES_2D_tri_lin/Mesh1/result.vtk";
 
     int quadrature = 1;
     bool only_help = false;

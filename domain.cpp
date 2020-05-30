@@ -72,8 +72,14 @@ Domain::Domain(Settings settings)
         case 3:
             elementsT1.emplace_back(id, &nodes, node_ids);
             break;
+        case 4:
+            elementsQ1.emplace_back(id, &nodes, node_ids);
+            break;
+        case 6:
+            elementsT2.emplace_back(id, &nodes, node_ids);
+            break;
         case 9:
-            //
+            elementsQ2.emplace_back(id, &nodes, node_ids);
             break;
         default:
             std::cerr<<"Unrecognized element type"<<std::endl;
@@ -126,10 +132,40 @@ void Domain::calc_gradients(){
 }
 
 
-void Domain::export_result(std::string filename){
+T1_iterator Domain::T1ptr(){
+    return elementsT1.begin();
+}
+
+T2_iterator Domain::T2ptr(){
+    return elementsT2.begin();
+}
+
+Q1_iterator Domain::Q1ptr(){
+    return elementsQ1.begin();
+}
+
+Q2_iterator Domain::Q2ptr(){
+    return elementsQ2.begin();
+}
+
+N_iterator Domain::Nptr(){
+    return nodes.begin();
+}
+
+size_t Domain::n_nodes(){
+    // Sentinel does not count!
+    return nodes.size() - 1;
+}
+
+size_t Domain::n_elems(){
+   //Sentinels do not count!
+   return -4 + elementsT1.size() + elementsQ2.size() +elementsT2.size() + elementsQ1.size();
+}
+
+void Domain::export_result_dat(Settings settings){
 
     std::ofstream outFile;
-    outFile.open(filename);
+    outFile.open(settings.results_dat_filename);
 
     if(gradients_calculated){
         // Printing solution and gradients
@@ -150,25 +186,132 @@ void Domain::export_result(std::string filename){
     outFile.close();
 }
 
-T1_iterator Domain::T1ptr(){
-    return elementsT1.begin();
+
+
+void Domain::export_result_vtk(Settings settings){
+
+    // Switching filename from std::string to char*
+    int name_length = settings.results_vtk_filename.size();
+    char filename[name_length+1]; // Just in case
+    settings.results_vtk_filename.copy(filename, name_length);
+    filename[name_length] = '\0'; //string copy fails to terminate with null character
+
+    // Using FILE* instead of std::ofstream so we can use the fprintf function with it.
+    FILE * outFile;
+    outFile =fopen(filename, "w");
+
+    // Header
+    fprintf(outFile, "# vtk DataFile Version 1.0.\nRESULT\nASCII\n\n");
+    fprintf(outFile, "DATASET UNSTRUCTURED_GRID\n\n");
+
+    // Nodes
+    fprintf(outFile, "POINTS %d float\n", (int) n_nodes());
+
+    for(N_iterator n=Nptr(); n->id >= 0; n++){
+        fprintf(outFile, "      %14.8E      %14.8E      %14.8E\n", n->coordinates[0], n->coordinates[1], 0.0);
+    }
+
+
+    // Connectivities
+    int connect_table_size = n_elems()
+                             + (elementsT1.size()-1) * elementsT1[0].n_nodes
+                             + (elementsQ2.size()-1) * elementsQ2[0].n_nodes; // TODO:  add more element types
+
+    fprintf(outFile, "\n");
+    fprintf(outFile, "CELLS %6d %6d\n", (int) n_elems(), connect_table_size);
+
+    char buffer[1024];
+
+    for(T1_iterator E = T1ptr(); E->id >= 0; E++){
+        E->connectivity_line_vtk(buffer);
+        fprintf(outFile, "%s", buffer);
+    }
+    for(T2_iterator E = T2ptr(); E->id >= 0; E++){
+        E->connectivity_line_vtk(buffer);
+        fprintf(outFile, "%s", buffer);
+    }
+    for(Q1_iterator E = Q1ptr(); E->id >= 0; E++){
+        E->connectivity_line_vtk(buffer);
+        fprintf(outFile, "%s", buffer);
+    }
+    for(Q2_iterator E = Q2ptr(); E->id >= 0; E++){
+        E->connectivity_line_vtk(buffer);
+        fprintf(outFile, "%s", buffer);
+    }
+
+    fprintf(outFile, "\n");
+
+    // Element types
+
+    fprintf(outFile, "CELL_TYPES %d\n", (int) n_elems());
+
+    std::string elem_types = "";
+
+    for(T1_iterator E = T1ptr(); E->id >= 0; E++){
+        fprintf(outFile, "% 2d", E->vtk_id);
+    }
+    for(T2_iterator E = T2ptr(); E->id >= 0; E++){
+        fprintf(outFile, "% 2d", E->vtk_id);
+    }
+    for(Q1_iterator E = Q1ptr(); E->id >= 0; E++){
+        fprintf(outFile, "% 2d", E->vtk_id);
+    }
+    for(Q2_iterator E = Q2ptr(); E->id >= 0; E++){
+        fprintf(outFile, "% 2d", E->vtk_id);
+    }
+
+    // Potential field
+    fprintf(outFile,"\n\n");
+    fprintf(outFile,"POINT_DATA %d\n", (int) n_nodes());
+    fprintf(outFile,"SCALARS Potential float\n");
+    fprintf(outFile,"LOOKUP_TABLE default\n");
+
+    for(N_iterator N = Nptr(); N->id >=0; N++){
+        fprintf(outFile, "%f\n", N->u);
+    }
+
+
+    // Velocity field
+    fprintf(outFile,"VECTORS Velocity float\n"); // Not printed in Matlab code
+//    fprintf(outFile,"LOOKUP_TABLE default\n");
+
+    for(N_iterator N = Nptr(); N->id >=0; N++){
+        fprintf(outFile, "%10f   %10f   %10f\n", N->grad_u(0), N->grad_u(1), 0.0);
+    }
+
 }
 
-Q2_iterator Domain::Q2ptr(){
-    return elementsQ2.begin();
-}
 
-N_iterator Domain::Nptr(){
-    return nodes.begin();
-}
 
-size_t Domain::n_nodes(){
-    // Sentinel does not count!
-    return nodes.size() - 1;
-}
 
-size_t Domain::n_elems(){
-   //Sentinels do not count!
-   return -2 + elementsT1.size() + elementsQ2.size();
-//   return -4 + elementsT1.size() + elementsQ2.size() +elementsT2.size() + elementsQ1.size();
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
