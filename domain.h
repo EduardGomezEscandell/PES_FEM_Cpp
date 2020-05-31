@@ -3,12 +3,13 @@
 
 #include "settings.h"
 
+#include "node.h"
+
 #include "elementt1.h"
 #include "elementt2.h"
 #include "elementq1.h"
 #include "elementq2.h"
 
-#include "node.h"
 #include "aux_functions.h" // split_string
 
 #include <stdio.h> // sprintf, fprintf
@@ -39,7 +40,7 @@ public:
 
     bool gradients_calculated = false;
 
-    Domain(Settings settings);
+    Domain(Settings settings, QuadData * quadratures);
 
     void printnodes();
     void printnodes(std::string filename);
@@ -56,15 +57,14 @@ public:
 };
 
 // Using macro so I don't need to use basically the same method for all four element types
-# define calc_gradient(E,qdata) do{                             \
-    Eigen::Vector3d U_local;                                    \
+# define CALC_GRADIENT_LOCAL(E,qdata) do{                       \
+    Eigen::VectorXd U_local(E->n_nodes);                        \
     for(int i=0; i<E->n_nodes; i++){                            \
         U_local(i) = E->nodes[i]->u;                            \
     }                                                           \
-    Eigen::MatrixXd gradU = Eigen::MatrixXd::Zero(2,E->n_nodes);\
     std::vector<N_iterator>::iterator n = E->nodes.begin();     \
-    for(qiterator q=qdata.pointsptr(); q->w >= 0; q++){         \
-        Eigen::MatrixXd gradN = E->get_invJacobian() * q->gradN;\
+    for(qiterator q=qdata->pointsptr(); q->w >= 0; q++){         \
+        Eigen::MatrixXd gradN = E->get_invJacobian(*q) * q->gradN;\
         (**n).grad_u += gradN * U_local;                        \
         n++;                                                    \
     }                                                           \

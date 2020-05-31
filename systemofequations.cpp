@@ -6,26 +6,30 @@ SystemOfEquations::SystemOfEquations()
 
 }
 
-void SystemOfEquations::assemble(Domain * domain, QuadData * qdata){
+void SystemOfEquations::assemble(Domain * domain){
 //    K_coo.reserve(5 * domain.n_nodes); // Quick approximation of expected no of entries
 
     size = domain->n_nodes() + dirichlet_nodes.size();
     F = Eigen::VectorXd::Zero(size);
 
     for(T1_iterator E = domain->T1ptr(); E->id >=0; E++){
-        ASSEMBLE_LOCAL(K_coo, E, qdata);
+        ASSEMBLE_LOCAL(K_coo, E);
+    }
+    for(T2_iterator E = domain->T2ptr(); E->id >=0; E++){
+        ASSEMBLE_LOCAL(K_coo, E);
+    }
+    for(Q1_iterator E = domain->Q1ptr(); E->id >=0; E++){
+        ASSEMBLE_LOCAL(K_coo, E);
+    }
+    for(Q2_iterator E = domain->Q2ptr(); E->id >=0; E++){
+        ASSEMBLE_LOCAL(K_coo, E);
     }
 
-//    for(Q2_iterator E = domain->Q2ptr(); E->id >=0; E++){
-//        assemble_local(K_coo, E, qdata);
-//    }
-
-
-    // Dirichlet Boundary condition via the penalty method
+    // Dirichlet boundary conditions via the penalty method
     for(size_t i=0; i<dirichlet_nodes.size(); i++)
     {
-        int boc = i + domain->n_nodes();     // Its ID as a boundary condition
-        int dof = dirichlet_nodes[i]->id; // Its ID as a dof
+        int boc = i + domain->n_nodes();     // Its ID as a boundary condition (starts at n_nodes)
+        int dof = dirichlet_nodes[i]->id;   // Its ID as a dof
 
         K_coo.emplace_back(boc, dof, 1.0);
         K_coo.emplace_back(dof, boc, 1.0);
@@ -34,11 +38,23 @@ void SystemOfEquations::assemble(Domain * domain, QuadData * qdata){
         F(boc) += dirichlet_nodes[i]->bc_value;
     }
 
-    // Neumann Boundary conditions via addition to load vector
-    for(size_t i=0; i<neumann_nodes.size(); i++)
-    {
-        int dof = neumann_nodes[i]->id; // Its ID as a dof
-        F(dof) += neumann_nodes[i]->bc_value;
+    // Neumann boundary condition by addition to load vector
+    for(Eg_iterator Eg = neumann_edges.begin(); Eg!= neumann_edges.end(); Eg++){
+        Eigen::VectorXd q_local(Eg->n_nodes);
+        for(int i=0; i<Eg->n_nodes; i++){
+            q_local(i) = Eg->nodes[i]->bc_value;
+        }
+        Eigen::MatrixXd M_local(Eg->n_nodes, Eg->n_nodes);
+        for(qiterator q=Eg->qdata->points.begin(); q->w >= 0; q++){
+            M_local += q->w * q->N.transpose() * q->N;
+        }
+        M_local *= Eg->length / Eg->qdata->total_weight;
+        Eigen::VectorXd F_local = M_local * q_local;
+
+        for(int i=0; i<Eg->n_nodes; i++){
+            int id = Eg->nodes[i]->id;
+            F(id) += F_local(i);
+        }
     }
 
     // Switching sparse matrix type to CSR
@@ -47,10 +63,10 @@ void SystemOfEquations::assemble(Domain * domain, QuadData * qdata){
     K.makeCompressed();
 }
 
-void SystemOfEquations::load_bc(Domain * dom, std::string filename)
+void SystemOfEquations::load_bc(Domain * domain, Settings settings)
 {
     std::ifstream inFile;
-    inFile.open(filename);
+    inFile.open(settings.boco_filename);
 
     std::string line;
 
@@ -67,7 +83,7 @@ void SystemOfEquations::load_bc(Domain * dom, std::string filename)
 
         // Removing invalid nodes (avoiding SEGFAULT)
         int node_id = stoi(data[1]) - 1; // File uses 1-indexed counting and C++ uses 0-indexed
-        if(node_id >= (int) dom->n_nodes()){
+        if(node_id >= (int) domain->n_nodes()){
             std::cerr<<"Boundary file includes nodes not present in the coordinates file"<<std::endl;
             throw -1;
         }
@@ -99,19 +115,28 @@ void SystemOfEquations::load_bc(Domain * dom, std::string filename)
         }
 
         // Storing info
-        Node * this_node = &(dom->nodes[node_id]);
+        Node * this_node = &(domain->nodes[node_id]);
         this_node->bc_value = bc_value;
         this_node->bc_type = bc_type;
-        switch(bc_type){
-        case BC_DIRICHLET:
+        if(bc_type == BC_DIRICHLET){
             dirichlet_nodes.push_back(this_node);
-            break;
-        case BC_NEUMANN:
-            neumann_nodes.push_back(this_node);
-            break;
         }
 
     }
+
+    for(T1_iterator E = domain->T1ptr(); E->id >=0; E++){
+        CREATE_NEUMANN_EDGES(E, neumann_edges, domain, qadta);
+    }
+    for(T2_iterator E = domain->T2ptr(); E->id >=0; E++){
+        CREATE_NEUMANN_EDGES(E, neumann_edges, domain, qadta);
+    }
+    for(Q1_iterator E = domain->Q1ptr(); E->id >=0; E++){
+        CREATE_NEUMANN_EDGES(E, neumann_edges, domain, qadta);
+    }
+    for(Q2_iterator E = domain->Q2ptr(); E->id >=0; E++){
+        CREATE_NEUMANN_EDGES(E, neumann_edges, domain, qadta);
+    }
+
 }
 
 double SystemOfEquations::solve(){
@@ -133,13 +158,18 @@ double SystemOfEquations::solve(Domain * dom){
     return error_norm;
 }
 
-void SystemOfEquations::plot_sparsity(std::string filename){
+void SystemOfEquations::plot_sparsity(Settings settings){
     /*
      * Plots the sparsity pattern of the system matrix as a bitmap.
-     * Using PBM format. Wikipedia's page is decent: https://en.wikipedia.org/wiki/Netpbm#File_formats
+     * Using PBM format. Wikipedia's page gives a good overview:
+     * https://en.wikipedia.org/wiki/Netpbm#File_formats
      */
     std::ofstream outpFile;
-    outpFile.open(filename);
+    try{
+        outpFile.open(settings.directory + "sparsity_patern.pbm");
+    } catch (...) {
+        outpFile.open("../PES_FEM_Cpp/results/sparsity_pattern.pbm");
+    }
 
     outpFile<<"P1"<<std::endl;             // B&W format
     outpFile<<"# Computer-generated file. Sparsity pattern of a 2D Laplacian matrix."<<std::endl;

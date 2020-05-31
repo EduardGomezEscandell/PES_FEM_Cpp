@@ -1,5 +1,9 @@
 #include "quaddata.h"
 
+QuadData::QuadData(){
+
+}
+
 QuadData::QuadData(size_t n_nodes)
 {
     // Quadrature lumped at the nodes
@@ -13,14 +17,19 @@ QuadData::QuadData(size_t n_nodes)
         points.emplace_back();
         break;
     case 4:
-        // Todo
+        points.emplace_back(1,-1,-1);
+        points.emplace_back(1, 1,-1);
+        points.emplace_back(1, 1, 1);
+        points.emplace_back(1,-1, 1);
+        points.emplace_back();
     case 6:
         // Todo
     case 9:
         // Todo
         break;
     default:
-        throw "Only linear and quadratic, triangular and quadrilateral elements allowed";
+        std::cerr<<"Only linear and quadratic, triangular and quadrilateral elements allowed";
+        throw -1;
     }
 }
 
@@ -105,50 +114,152 @@ QuadData::QuadData(std::string filename, int n_points_requested)
     points.emplace_back();
 }
 
+QuadData QuadData::copy(){
+    QuadData new_qdata;
+
+    new_qdata.points = points;
+    new_qdata.npoints = npoints;
+
+    new_qdata.total_weight = total_weight;
+
+    return new_qdata;
+}
+
 
 qiterator QuadData::pointsptr(){
     return points.begin();
 }
 
-//void QuadData::square_quadrature(){
-//    // Turns a segment quadrature into a square quadrature. Shape functions must be calculated afterwards.
-//    int new_npoints = npoints*npoints;
-//    QuadPoint *new_points = (QuadPoint *) malloc( (new_npoints+1) * sizeof(QuadPoint));
+void QuadData::square_quadrature(){
+    // Turns a segment quadrature into a square quadrature. Shape functions must be calculated afterwards.
+    std::vector<QuadPoint> new_points;
 
-//    int k = 0;
+    double coords[] = {0,0};
 
-//    double coords[] = {0,0};
+    for(qiterator qi = pointsptr(); qi->w > 0; qi++){
+        coords[0] = qi->coordinates[0];
 
-//    for(qiterator qi = pointsptr(); qi->w > 0; qi++){
-//        coords[0] = qi->coordinates[0];
+        for(qiterator qj = pointsptr(); qj->w > 0; qj++){
+            coords[1] = qj->coordinates[0];
 
-//        for(qiterator qj = pointsptr(); qj->w > 0; qj++){
-//            coords[1] = qj->coordinates[0];
+            double w = qi->w * qj->w;
+            new_points.emplace_back(w, coords);
+        }
+    }
 
-//            double w = qi->w * qj->w;
-//            new_points[k] = QuadPoint(w, coords);
-//            k++;
-//        }
-//    }
+    npoints = new_points.size();
 
-//    // Adding an end of array sentinel by adding an invalid weight at the end
-//    new_points[k] = QuadPoint();
+    // Adding an end of array sentinel by adding an invalid weight at the end
+    new_points.emplace_back();
 
-//    points = new_points;
-//    npoints = new_npoints;
-//    free(new_points);
-//}
-
-
+    points = new_points;
+}
 
 
 void QuadData::initialize_shape_functions(int n_functions){
+    switch (n_functions) {
+    case 3:
+        initialize_shape_functions_tri_lin();
+        break;
+    case 4:
+        initialize_shape_functions_quad_lin();
+        break;
+    case 6:
+        initialize_shape_functions_tri_quad();
+        break;
+    case 9:
+        initialize_shape_functions_quad_quad();
+        break;
+    default:
+        std::cerr<<"Unrecognized element size"<<std::endl;
+        throw -1;
+    }
+}
+
+void QuadData::initialize_shape_functions_line(int order){
+    total_weight = 0;
+    switch(order){
+    case 1:
+        for(qiterator q=pointsptr(); q->w >=0; q++){
+            total_weight +=  q->w;
+            double x = q->coordinates[0];
+
+            q->N = Eigen::MatrixXd(1, order+1);
+            q->gradN = Eigen::MatrixXd(1, order+1);
+
+            q->N(0) = 0.5*(1 - x);
+            q->N(1) = 0.5*(1 + x);
+
+            q->gradN(0) = -0.5;
+            q->gradN(1) =  0.5;
+        }
+        break;
+    case 2:
+        for(qiterator q=pointsptr(); q->w >=0; q++){
+            total_weight +=  q->w;
+            double x = q->coordinates[0];
+
+            q->N = Eigen::MatrixXd(1, order+1);
+            q->gradN = Eigen::MatrixXd(1, order+1);
+
+             q->N(0) =   0.5 * x*(1-x);
+             q->N(1) = (1+x) * (1-x);
+             q->N(2) =  0.5 * x *(1+x);
+
+             q->gradN(0) = 0.5 - x;
+             q->gradN(1) =  -2 * x;
+             q->gradN(2) = 0.5 + x;
+        }
+        break;
+    default:
+        std::cerr<<"Unrecognized element size"<<std::endl;
+        throw -1;
+    }
+
+}
+
+
+QuadData * initialize_quadratures(Settings settings){
+    // Creates a pointer to the quadrature data, an array with:
+    // [0] - Quadrature and shape functions for a linear triangle
+    // [1] - Quadrature and shape functions for a quadratic triangle
+    // [2] - Quadrature and shape functions for a linear quadrilateral
+    // [3] - Quadrature and shape functions for a quadratic quadrilateral
+    // [4] - Quadrature and shape functions for a linear segment
+    // [5] - Quadrature and shape functions for a quadratic segment
+
+    int n_points_triangle = settings.quadrature;
+    int n_points_quad = ceil(sqrt(settings.quadrature)); // The number of points will be squared later
+
+    static QuadData quadratures[] =
+    {
+        {settings.TWB_filename, n_points_triangle}, // Triangles
+        {},
+        {settings.gauss_filename, n_points_quad}, // Quads
+        {},
+        {settings.gauss_filename, settings.quadrature}, // Lines
+        {}
+    };
+
+    quadratures[1] = quadratures[0].copy(); // Copying gauss points from T1 to T2
+    quadratures[3] = quadratures[2].copy(); // Copying gauss points from Q1 to Q2
+    quadratures[5] = quadratures[4].copy(); // Copying gauss points from S1 to S2
+
+    quadratures[2].square_quadrature(); // Turning quadrature of segment onto square
+    quadratures[3].square_quadrature(); // Turning quadrature of segment onto square
+
+    return quadratures;
+}
+
+
+void QuadData::initialize_shape_functions_tri_lin(){
+    const int n_functions = 3;
 
     // Obtaining sum of weights (used for integration)
     total_weight = 0;
 
     // Corners for the shape functions
-    double corners[3][2]= {{0,0},{1,0},{0,1}};
+    double corners[n_functions][2]= {{0,0},{1,0},{0,1}};
 
     // Looping obtaining shape fun for all integration points;
     for(qiterator q = pointsptr(); q->w > 0; q++){
@@ -178,7 +289,44 @@ void QuadData::initialize_shape_functions(int n_functions){
     }
 }
 
+void QuadData::initialize_shape_functions_quad_lin(){
+    const int n_functions = 4;
 
+    // Obtaining sum of weights (used for integration)
+    total_weight = 0;
 
+    // Looping obtaining shape fun for all integration points;
+    for(qiterator q = pointsptr(); q->w > 0; q++){
+        total_weight += q->w;
 
+        double x = q->coordinates[0];
+        double y = q->coordinates[1];
 
+        // Shape functions
+        Eigen::MatrixXd N (n_functions, 1);
+        N << (1-x)*(1-y)/4,
+             (1+x)*(1-y)/4,
+             (1+x)*(1+y)/4,
+             (1-x)*(1+y)/4;
+
+        q->N = N.transpose();
+
+        // Gradient
+        Eigen::MatrixXd gradN(n_functions, 2);
+
+        gradN <<  (y-1)/4,  (x-1)/4,
+                  (1-y)/4, -(1+x)/4,
+                  (1+y)/4,  (1+x)/4,
+                  (1+y)/4,  (1-x)/4;
+
+        q->gradN = gradN.transpose();
+    }
+}
+
+void QuadData::initialize_shape_functions_tri_quad(){
+    // TODO
+}
+
+void QuadData::initialize_shape_functions_quad_quad(){
+    // TODO
+}

@@ -3,6 +3,7 @@
 
 ElementT1::ElementT1() : Element()
 {
+    n_nodes = 3;
     // Invalid element to use as sentinel
 }
 
@@ -48,31 +49,18 @@ Eigen::Matrix2d ElementT1::calc_jacobian(){
     return jacobian;
 }
 
-//void ElementT1::assemble(cooMat * K, QuadData *qdata){
-//    calc_jacobian();
-
-//    Eigen::MatrixXd k_local = Eigen::MatrixXd::Zero(n_nodes, n_nodes);
-
-//    for(qiterator q=qdata->points.begin(); q->w >= 0; q++){
-//        Eigen::MatrixXd gradN;
-//        gradN = get_invJacobian() * q->gradN;
-
-//        k_local += q->w * (gradN.transpose() * gradN);
-//    }
-
-//    k_local *= area / qdata->total_weight;
-
-//    for(int i=0; i<n_nodes; i++){
-//        for(int j=0; j<n_nodes; j++){
-//            K->emplace_back(nodes[i]->id, nodes[j]->id, k_local(i,j));
-//        }
-//    }
-//}
-
-Eigen::Matrix2d ElementT1::get_jacobian(){
+Eigen::Matrix2d ElementT1::get_jacobian(QuadPoint q){
+    // Argument not used, it's here just for consistency
     return jacobian;
 }
 
-Eigen::Matrix2d ElementT1::get_invJacobian(){
+Eigen::Matrix2d ElementT1::get_invJacobian(QuadPoint q){
+    // Argument not used, it's here just for consistency
     return invJacobian;
+}
+
+Edge ElementT1::get_edge(int i){
+    std::vector<int> node_ids = {i, (i+1)%n_nodes};
+    Edge edge(node_ids, nodes, qdata_line);
+    return edge;
 }

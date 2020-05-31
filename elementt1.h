@@ -1,7 +1,7 @@
 #ifndef ELEMENTT1_H
 #define ELEMENTT1_H
+
 #include "element.h"
-#include "quaddata.h"
 
 class QuadData;
 
@@ -17,11 +17,11 @@ public:
     double * barycentric_to_cartesian(double *L);
     double * barycentric_to_cartesian(double *L, double ** corners);
 
-    Eigen::Matrix2d calc_jacobian();
-//    void assemble(cooMat *K, QuadData *qdata);
+    Edge get_edge(int i);
 
-    Eigen::Matrix2d get_jacobian();
-    Eigen::Matrix2d get_invJacobian();
+    Eigen::Matrix2d calc_jacobian();
+    Eigen::Matrix2d get_jacobian(QuadPoint q);
+    Eigen::Matrix2d get_invJacobian(QuadPoint q);
 };
 
 #endif // ELEMENTT1_H

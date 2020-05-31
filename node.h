@@ -2,6 +2,7 @@
 #define NODE_H
 #include "point.h"
 #include "Eigen/Dense"
+#include <vector>
 
 #define BC_NONE 0
 #define BC_DIRICHLET 1
@@ -22,5 +23,7 @@ public:
     Node(int node_id, double *X);
     Node(int node_id, double x, double y);
 };
+
+typedef std::vector<Node>::iterator N_iterator; // Typedef'd pointer to node in vector
 
 #endif // NODE_H

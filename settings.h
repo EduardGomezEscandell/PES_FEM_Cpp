@@ -10,7 +10,8 @@ class Settings
 public:
 
     std::string directory = "../PES_FEM_Cpp/mesh_data/PES_2D_tri_lin/Mesh1/";
-    std::string gauss_filename = "../PES_FEM_Cpp/math_data/gauss_points_triangle.txt";
+    std::string gauss_filename = "../PES_FEM_Cpp/math_data/gauss_points_segment.txt";
+    std::string TWB_filename = "../PES_FEM_Cpp/math_data/gauss_points_triangle.txt";
     std::string node_filename = "../PES_FEM_Cpp/mesh_data/PES_2D_tri_lin/Mesh1/Node_2D_tri_lin.dat";
     std::string mesh_filename = "../PES_FEM_Cpp/mesh_data/PES_2D_tri_lin/Mesh1/Element_2D_tri_lin.dat";
     std::string boco_filename = "../PES_FEM_Cpp/mesh_data/PES_2D_tri_lin/Mesh1/boundaries.dat";

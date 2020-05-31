@@ -4,21 +4,26 @@
 #include <stdlib.h>
 
 #include <vector>
-#include "quaddata.h"
 #include "dependencies/Eigen/Dense"
 #include "dependencies/Eigen/Sparse"
-typedef std::vector<Eigen::Triplet<double>> cooMat; //Typedef'd COO matrix
 
-typedef std::vector<Node>::iterator N_iterator; // Typedef'd pointer to node in vector
+#include "quaddata.h"
+#include "edge.h"
+
+
+
+typedef std::vector<Eigen::Triplet<double>> cooMat; //Typedef'd COO matrix
 
 class Element
 {
 public:
     int id;
     int n_nodes;
+    double area;
 
     std::vector<N_iterator> nodes;
-    double area;
+    QuadData * qdata;
+    QuadData * qdata_line;
 
     bool jacobian_is_calculated = false;
 

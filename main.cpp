@@ -18,29 +18,21 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    int n_points = 5;
-    if(argc>1){
-        n_points = atoi(argv[1]);
-    }
     std::cout<<"Loading data ..."<<std::endl;
     // Loading quadrature
-    QuadData qdata(settings.gauss_filename, n_points);
+    QuadData * qdata = initialize_quadratures(settings);
 
-    // Loading geometry
-    Domain domain(settings);
+    // Loading geometry, calculating shape functions
+    Domain domain(settings, qdata);
 
     // Loading boundary conditions
     SystemOfEquations SysEq;
-    SysEq.load_bc(&domain, settings.boco_filename);
-
-    // Loading shape functions
-    std::cout<<"Preliminary math ..."<<std::endl;
-    qdata.initialize_shape_functions(domain.elementsT1[0].n_nodes);
+    SysEq.load_bc(&domain, settings);
 
     // Assembling
     std::cout<<"Assembling system of equations..."<<std::endl;
-    SysEq.assemble(&domain, &qdata);
-    SysEq.plot_sparsity("here.pbm");
+    SysEq.assemble(&domain);
+    SysEq.plot_sparsity(settings);
 
     // Solving
     std::cout<<"Solving..."<<std::endl;

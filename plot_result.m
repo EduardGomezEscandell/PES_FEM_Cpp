@@ -1,12 +1,11 @@
 clearvars;
-close all;
 
 %% Input
 
-Mesh  = 4;         % 1 through 5
-Shape_in = 'T';    % Q, T
+Mesh  = 5;         % 1 through 5
+Shape_in = 'Q';    % Q, T
 Order_in = 1;      % 1, 2
-quadrature = 3;
+quadrature = 1;
 
 %% Input interpreter
 
@@ -43,15 +42,20 @@ system(['./PES_FEM_Cpp ', argv1,' ', argv2]);
 
 %% Output
 Nodes     = load([directory, 'Node', problem]);
-Elements  = load([directory, 'Element', problem]);
+if Shape_in == 'T'
+    Elements  = load([directory, 'Element', problem]);
+else
+    Elements = delaunay(Nodes(:,2), Nodes(:,3));
+end
 Solutions = load([directory, 'result.dat']);
+
+ZERO = zeros(size(Nodes(:,2)));
 
 subplot(121);
 trisurf(Elements,Nodes(:,2),Nodes(:,3), Solutions(:,1));
 shading interp;
 
 subplot(122);
-ZERO = zeros(size(Nodes(:,2)));
 norm_U = sqrt(Solutions(:,2).^2 + Solutions(:,3).^2);
 trisurf(Elements,Nodes(:,2),Nodes(:,3), ZERO, norm_U);
 shading interp;

@@ -6,6 +6,7 @@ CONFIG -= qt
 SOURCES += \
         aux_functions.cpp \
         domain.cpp \
+        edge.cpp \
         element.cpp \
         elementq1.cpp \
         elementq2.cpp \
@@ -22,6 +23,7 @@ SOURCES += \
 HEADERS += \
     aux_functions.h \
     domain.h \
+    edge.h \
     element.h \
     elementq1.h \
     elementq2.h \

@@ -38,6 +38,7 @@ int Element::connectivity_line_vtk(char * buffer){
     line += "\n";
 
     line.copy(buffer, line.size()+1);
+    buffer[line.size()] = '\0';
 
     return line.size()+1;
 }
